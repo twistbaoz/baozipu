@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"/>
+    <title>Complex Map</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/3.23/esri/css/esri.css">
+    <style>
+      html, body, #map {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+    <script src="https://js.arcgis.com/3.23/"></script>
+    <script>
+        alert("欢迎您！")
+        var map;
+        function showMap(){
+            require(["esri/map",
+                     "dojo/dom","dojo/on","esri/geometry/Point",
+                     "dojo/domReady!"], 
+              function(Map,dom,on,Point) {
+                on (dom.byId("queryIt"),"click",getValues);
+          map = new Map("map", {
+          basemap: "topo",  //For full list of pre-defined basemaps, navigate to http://arcg.is/1JVo6Wd
+          center: [-122.45,37.75], // longitude, latitude
+          zoom: 13
+        });
+                function getValues(){
+                    var mapZoom = dom.byId("mapZoom").value;
+                    var mapLon = dom.byId("mapLon").value;
+                    var mapLat = dom.byId("mapLat").value;
+                    var mapBasemap = dom.byId("mapBasemap").value;
+                    var mapPoint = new Point(mapLon,mapLat);
+                    map.setZoom(mapZoom);
+                    map.centerAt(mapPoint);
+                    map.setBasemap(mapBasemap);
+                }
+      });
+        }
+    </script>
+  </head>
+
+  <body>
+      <input type = "button" id="showMap" class="submitButton" value = "显示地图" onclick="showMap()">
+      <input id="mapZoom" type="text" value="" placeholder="缩放级别:" />
+      <input id="mapLon" type="text" value="" placeholder="经度:" />
+      <input id="mapLat" type="text" value="" placeholder="纬度:" />
+      <input id="mapBasemap" type="text" value="" placeholder="地图风格:" />
+      <input type = "button" id="queryIt"  class="submitButton" value = "查询并显示地图">
+      <div id="map"></div>
+
+
+  </body>
+</html>
