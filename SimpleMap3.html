@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"/>
+    <title>Complex Map</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/3.23/esri/css/esri.css">
+    <link rel="stylesheet" type="text/css" href="http://serverapi.arcgisonline.com/jsapi/arcgis/1.6/js/dojo/dijit/themes/tundra/tundra.css">
+
+    <style>
+      html, body, #map {
+        width: 600px;
+        height:600px;
+      }
+        #map2
+        {
+            position: absolute;
+            width: 600px;
+            height:600px;
+            left: 620px;
+            top: 1px;
+        }
+    </style>
+      
+          
+      
+    <script src="https://js.arcgis.com/3.23/"></script>
+    <!-- <script src="web.js"></script> -->
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>  
+    <script>
+          var map;
+          var scale;
+          var myid;
+          var dynamicMapServiceLayer,map,visible = []; 
+          
+         require(["esri/map","esri/layers/ArcGISDynamicMapServiceLayer","esri/geometry/scaleUtils","dojo/on", "dojo/domReady!"],function(Map, ArcGISDynamicMapServiceLayer,scaleUtils,on){
+//添加地图1
+              map = new Map("map", {
+          basemap: "topo",
+          center: [-116.093, 34.218],
+          zoom: 7
+        });
+              
+              
+//添加地图2
+              map2=new Map("map2",{
+          basemap: "topo",
+          center: [-116.093, 34.218],
+          zoom: 7
+              });
+//实现地图联动
+              map.on("extent-change",function(event){
+                  scale = scaleUtils.getScale(map);
+           document.getElementById("inputFileItemId").value = scale;
+                  if (map2)
+                      {
+                          map2.setExtent(event.extent);
+                      }
+              })
+//比例尺
+              map.on("load",function(event){
+           scale = scaleUtils.getScale(map);
+           document.getElementById("inputFileItemId").value = scale;
+		    //myid = dynamicMapServiceLayer.id;
+		    //alert(myid);	
+        });
+//mousemove事件
+              map.on("mouse-move",function(e){
+             document.getElementById("inputFile").value = e.x + ","+ e.y;
+			 dojo.byId(map.id+'_welcome').style.clip="rect(0px,"+event.clientX +"px,500px,0px)";
+        });
+
+//添加动态图层
+              dynamicMapServiceLayer = new ArcGISDynamicMapServiceLayer(
+                "http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StatesCitiesRivers_USA/MapServer",{
+				 id : "welcome"
+           });
+            if (dynamicMapServiceLayer.loaded) {        
+                buildLayerList(dynamicMapServiceLayer);     
+               		   
+            }else{
+                dojo.connect(dynamicMapServiceLayer,"onLoad",buildLayerList);		
+            }  
+			dynamicMapServiceLayer.on("load",function(e){
+		    myid = e.layer.id;
+		    alert(myid);	
+        });
+             });
+
+          <!-- dynamicMapServiceLayer = new ArcGISDynamicMapServiceLayer( -->
+                <!-- "http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StatesCitiesRivers_USA/MapServer" -->
+            <!-- ); -->
+            
+            <!-- if (dynamicMapServiceLayer.loaded) {         -->
+                <!-- buildLayerList(dynamicMapServiceLayer);               -->
+            <!-- }else{ -->
+                <!-- dojo.connect(dynamicMapServiceLayer,"onLoad",buildLayerList); -->
+            <!-- }   -->	
+//添加图层列表
+            function buildLayerList(layer) {
+            var infos = layer.layerInfos, info;
+            var items = [];
+            for (var i=0,j=infos.length;i<j;i++) {
+                info = infos[i];
+                if (info.defaultVisibility) {
+                    visible.push(info.id);
+                }
+                items[i] = "<input type='checkbox' class='list_item' checked='" + (info.defaultVisibility ? "checked" : "") + "' id='" + info.id +"' onclick='updateLayerVisibility();'/><label for='" +info.id+ "'>" +info.name+ "</label>";          
+            }
+            dojo.byId("layer_list").innerHTML = items.join();
+            
+            layer.setVisibleLayers(visible);
+            map.addLayer(layer);
+        
+        }
+            
+            
+            function updateLayerVisibility() {
+            var inputs = dojo.query(".list_item"), input;
+            visible = [];
+            for (var i=0,j=inputs.length;i<j;i++) {
+                if(inputs[i].checked) {
+                    visible.push(inputs[i].id);
+                }           
+            }
+            dynamicMapServiceLayer.setVisibleLayers(visible);
+        
+        }
+//添加和删除图层
+         function deleteLayer() {
+          map.removeLayer(dynamicMapServiceLayer);
+		  dojo.byId("layer_list").innerHTML = "";
+        }
+		 function addLayer() {
+          buildLayerList(dynamicMapServiceLayer); 
+        }
+
+          //选择底图风格
+              function choose_basemap() {
+             var objs = document.getElementById("basemapsec");
+             var index = objs.selectedIndex;
+             basemap1 = objs.options[index].value;
+             map.setBasemap(basemap1);
+         }
+                              
+      </script>
+      <body>
+        <select id ="basemapsec" title="底图风格" >
+        <option value="topo">"topo"</option>
+        <option value="satellite">"satellite"</option>
+        <option value="hybrid">"hybrid"</option>
+        <option value="gray">"gray"</option>
+        <option value="oceans">"oceans"</option>
+        <option value="osm">"osm"</option>
+        <option value="national-geographic">"national-geographic"</option>
+        </select>
+          
+          <input type='button' value='切换底图风格' onClick="choose_basemap()"/>
+          <label for="dashboardFieldNamesCombo">图层比例尺:</label> 
+          <input type="text" id="inputFileItemId" style="width:275px" />
+          <label for="dashboardField">鼠标坐标:</label> 
+          <input type="text" id="inputFile" style="width:275px" />
+      
+          
+          <br />Layer List: <span id="layer_list"></span>
+	      <button id="delyer" onclick="deleteLayer()" >删除图层</button>
+	      <button id="adlyer" onclick="addLayer()" >添加图层</button>
+	      <br />
+          <div id="map"></div>
+          <div id="map2"></div>
+          <!-- <div id="welcome"></div> -->
+      </body>
